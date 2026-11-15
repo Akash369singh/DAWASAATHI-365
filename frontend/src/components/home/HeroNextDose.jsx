@@ -217,7 +217,8 @@ export function HeroNextDose({ nextDose, onTake, onSkip, onSnooze, elderName }) 
                 whileTap={{ scale: 0.98 }}
                 onClick={handleTakeClick}
                 disabled={taking}
-                className="w-full py-5 bg-teal-500 hover:bg-teal-600 text-white rounded-3xl font-extrabold text-xl md:text-2xl min-h-[64px] flex items-center justify-center gap-3 shadow-soft-md shadow-teal-500/25 transition-all select-none"
+                aria-label={`Mark ${nextDose.medication_name} ${nextDose.dosage} as taken`}
+                className="w-full py-5 bg-teal-500 hover:bg-teal-600 text-white rounded-3xl font-extrabold text-xl md:text-2xl min-h-[64px] flex items-center justify-center gap-3 shadow-soft-md shadow-teal-500/25 transition-all select-none focus-visible:ring-4 focus-visible:ring-teal-300"
               >
                 {taking ? (
                   <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin" />

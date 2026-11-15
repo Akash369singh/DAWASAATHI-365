@@ -150,6 +150,7 @@ export function SosTopBarButton({ onSosTriggered }) {
           onMouseLeave={handleHoldEnd}
           onTouchStart={handleHoldStart}
           onTouchEnd={handleHoldEnd}
+          aria-label="Emergency SOS (Hold 2 seconds)"
           title="Hold 2s for Emergency SOS"
           className="relative select-none flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-extrabold text-xs shadow-soft-sm shadow-red-500/30 transition-all cursor-pointer overflow-hidden"
         >

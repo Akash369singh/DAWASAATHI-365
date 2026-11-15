@@ -60,11 +60,23 @@ export function HomePage() {
     }
   }
 
-  // Initial fetch and 10s live background polling
+  // Initial fetch and smart background polling (pauses when tab is hidden to save battery & data)
   useEffect(() => {
     fetchHomeData()
-    const interval = setInterval(fetchHomeData, 10000)
-    return () => clearInterval(interval)
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return
+      fetchHomeData()
+    }, 10000)
+
+    const handleVisibility = () => {
+      if (!document.hidden) fetchHomeData()
+    }
+    document.addEventListener("visibilitychange", handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", handleVisibility)
+    }
   }, [])
 
   const handleTakeDose = async (doseId) => {

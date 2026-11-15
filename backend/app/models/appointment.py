@@ -18,7 +18,7 @@ class Appointment(Base):
     location = Column(String(255), nullable=False)
     scheduled_datetime = Column(DateTime(timezone=True), nullable=False, index=True)
     notes = Column(Text, nullable=True)
-    status = Column(String(20), nullable=False, default="SCHEDULED")  # SCHEDULED, COMPLETED, CANCELLED
+    status = Column(String(20), nullable=False, default="SCHEDULED", index=True)  # SCHEDULED, COMPLETED, CANCELLED
     
     created_at = Column(DateTime(timezone=True), default=utc_now)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)

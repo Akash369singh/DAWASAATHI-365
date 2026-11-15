@@ -18,7 +18,7 @@ class AuditLog(Base):
     action = Column(String(60), nullable=False, index=True)
     details = Column(JSON, default=dict)
     ip_address = Column(String(45), nullable=True)
-    created_at = Column(DateTime(timezone=True), default=utc_now)
+    created_at = Column(DateTime(timezone=True), default=utc_now, index=True)
 
     # Relationships
     profile = relationship("Profile", back_populates="audit_logs")

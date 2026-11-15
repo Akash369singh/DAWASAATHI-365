@@ -1,8 +1,11 @@
+import logging
 import zoneinfo
 from datetime import datetime, date, time, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+
+logger = logging.getLogger(__name__)
 
 from app.database import SessionLocal
 from app.config import settings
@@ -95,7 +98,7 @@ def generate_missing_dose_logs(db: Session, target_days_ahead: int = 1):
                             db.add(new_dose)
                             db.flush()
                     except Exception as err:
-                        print(f"Error parsing schedule time {time_str} for med {med.id}: {err}")
+                        logger.warning(f"Error parsing schedule time {time_str} for med {med.id}: {err}")
 
     db.commit()
 
@@ -715,7 +718,7 @@ def process_reminders_and_escalations():
             try:
                 check_and_send_refill_alerts(db, profile, now_utc)
             except Exception as e:
-                print(f"⚠️ Refill alert check failed for profile {profile.id}: {e}")
+                logger.warning(f"Refill alert check failed for profile {profile.id}: {e}")
 
         # Feature 6: Check Sunday 6 PM Family Digest
         for profile in all_active_profiles:
@@ -726,12 +729,12 @@ def process_reminders_and_escalations():
                 if now_loc.weekday() == 6 and now_loc.hour == 18 and now_loc.minute <= 2:
                     send_weekly_family_digest(db, profile.id, force=False)
             except Exception as e:
-                print(f"⚠️ Weekly digest trigger failed for profile {profile.id}: {e}")
+                logger.warning(f"Weekly digest trigger failed for profile {profile.id}: {e}")
 
         db.commit()
 
     except Exception as exc:
-        print(f"⚠️ Scheduler error: {exc}")
+        logger.error(f"Scheduler error: {exc}")
         db.rollback()
     finally:
         db.close()
@@ -977,4 +980,4 @@ def start_scheduler():
             replace_existing=True,
         )
         scheduler.start()
-        print("🕒 DawaSaathi 365 Proactive Scheduler initialized (60s tick).")
+        logger.info("🕒 DawaSaathi 365 Proactive Scheduler initialized (60s tick).")

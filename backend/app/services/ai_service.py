@@ -1,10 +1,13 @@
 import json
+import logging
 import re
 from datetime import datetime, date, timedelta, timezone
 import zoneinfo
 from typing import Dict, Any, List, Optional
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 # Attempt import of Google GenAI SDK
 try:
@@ -21,7 +24,7 @@ def get_gemini_client():
     try:
         return genai.Client(api_key=settings.GEMINI_API_KEY)
     except Exception as exc:
-        print(f"Warning: could not initialize Gemini client: {exc}")
+        logger.warning(f"Could not initialize Gemini client: {exc}")
         return None
 
 
@@ -72,7 +75,7 @@ Return ONLY pure JSON. No markdown ticks, no preamble.
             parsed["ai_assisted_notice"] = "AI-assisted extraction from prescription image. Please review and verify all details."
             return parsed
         except Exception as exc:
-            print(f"Gemini OCR fallback triggered: {exc}")
+            logger.warning(f"Gemini OCR fallback triggered: {exc}")
 
     # Fallback realistic parsing
     return {
@@ -174,7 +177,7 @@ Return pure JSON only.
             res["ai_assisted_notice"] = "AI-assisted parsed entry. Please verify details before confirming."
             return res
         except Exception as exc:
-            print(f"Gemini NL parse fallback triggered: {exc}")
+            logger.warning(f"Gemini NL parse fallback triggered: {exc}")
 
     # Fallback Heuristic Parser
     lower = text.lower()
@@ -308,7 +311,7 @@ Return pure JSON only:
             res["ai_assisted_notice"] = "AI summaries are for informational organization and do not substitute professional medical advice."
             return res
         except Exception as exc:
-            print(f"Gemini insight fallback triggered: {exc}")
+            logger.warning(f"Gemini insight fallback triggered: {exc}")
 
     # Fallback structured clinical report
     return {
@@ -385,7 +388,7 @@ Format your response as pure JSON:
             raw = re.sub(r"```$", "", raw, flags=re.MULTILINE).strip()
             return json.loads(raw)
         except Exception as exc:
-            print(f"Gemini voice chat fallback triggered: {exc}")
+            logger.warning(f"Gemini voice chat fallback triggered: {exc}")
 
     # Fallback intelligent conversational response
     lower = user_message.lower()
@@ -736,7 +739,7 @@ Return ONLY valid JSON with this exact schema (no markdown ticks, no preamble):
             )
             return data
         except Exception as exc:
-            print(f"Gemini medicine lookup error: {exc}, falling back to built-in pharmacopeia")
+            logger.warning(f"Gemini medicine lookup error: {exc}, falling back to built-in pharmacopeia")
 
     # Match built-in database
     query_lower = clean_query.lower()
@@ -841,7 +844,7 @@ Return ONLY pure JSON matching this exact schema:
             )
             return data
         except Exception as exc:
-            print(f"Gemini image pill identification error: {exc}")
+            logger.warning(f"Gemini image pill identification error: {exc}")
 
     # Fallback photo identification: Default to Metformin 500mg (most common photo sample)
     med = dict(BUILTIN_MEDICINE_DATABASE["metformin"])

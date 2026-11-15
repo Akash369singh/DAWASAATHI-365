@@ -251,6 +251,13 @@ def execute_magic_action_get(token: str, db: Session = Depends(get_db)):
     if action == "CHECKIN":
         mood = payload.get("mood", "GOOD")
         profile_id = payload.get("profile_id")
+        if not profile_id and member_id:
+            mem = db.query(Member).filter(Member.id == member_id).first()
+            if mem:
+                profile_id = mem.profile_id
+        if not profile_id:
+            prof_first = db.query(Profile).first()
+            profile_id = prof_first.id if prof_first else 1
         prof = db.query(Profile).filter(Profile.id == profile_id).first() if profile_id else None
         elder_name = prof.elder_name if prof else "Elder"
 
@@ -343,6 +350,18 @@ def execute_magic_action_get(token: str, db: Session = Depends(get_db)):
     if act_token_row:
         act_token_row.is_used = True
         act_token_row.used_at = now
+    else:
+        from datetime import timedelta
+        db.add(ActionToken(
+            token_hash=token,
+            action_type=action,
+            ref_id=dose.id,
+            profile_id=dose.profile_id,
+            member_id=member_id,
+            expires_at=now + timedelta(days=2),
+            is_used=True,
+            used_at=now,
+        ))
 
     db.add(AuditLog(
         profile_id=dose.profile_id,

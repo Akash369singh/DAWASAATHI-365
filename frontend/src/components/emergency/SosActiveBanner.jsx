@@ -20,8 +20,24 @@ export function SosActiveBanner() {
 
   useEffect(() => {
     fetchActive()
-    const timer = setInterval(fetchActive, 7000)
-    return () => clearInterval(timer)
+    const timer = setInterval(() => {
+      if (typeof document !== "undefined" && document.hidden) return
+      fetchActive()
+    }, 7000)
+
+    const handleVisibility = () => {
+      if (!document.hidden) fetchActive()
+    }
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", handleVisibility)
+    }
+
+    return () => {
+      clearInterval(timer)
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibility)
+      }
+    }
   }, [])
 
   const handleAcknowledge = async () => {
@@ -66,6 +82,8 @@ export function SosActiveBanner() {
         className="w-full z-30 sticky top-[61px] shadow-lg"
       >
         <div
+          role="alert"
+          aria-live="assertive"
           className={`px-4 py-3 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-3 ${
             isAck
               ? "bg-amber-600 text-white"

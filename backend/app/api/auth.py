@@ -19,6 +19,14 @@ from app.core.deps import get_current_member, get_current_profile, RoleChecker
 router = APIRouter(prefix="/api/auth", tags=["Authentication & Profiles"])
 
 
+def ensure_utc(dt):
+    if dt is None:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def generate_profile_code(db: Session) -> str:
     """Generate a unique human-friendly care profile code like CARE-8492."""
     for _ in range(10):
@@ -44,8 +52,9 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)):
 
     for m in members:
         # Check if member is locked out
-        if m.locked_until and m.locked_until > now:
-            minutes_left = int((m.locked_until - now).total_seconds() / 60) + 1
+        locked_utc = ensure_utc(m.locked_until)
+        if locked_utc and locked_utc > now:
+            minutes_left = int((locked_utc - now).total_seconds() / 60) + 1
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail=f"Account temporarily locked due to failed attempts. Try again in {minutes_left} minutes.",

@@ -122,21 +122,22 @@ export function DailyCheckinCard() {
       </div>
 
       {/* 3 Large Accessible Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" role="group" aria-label="Daily wellbeing options">
         <button
           type="button"
+          aria-label="I am feeling good, energetic and healthy"
           onClick={() => {
             setSelectedMood("GOOD")
             handleSubmit("GOOD")
           }}
           disabled={submitting}
-          className={`p-4 rounded-2xl border-2 flex items-center sm:flex-col gap-3 text-left sm:text-center transition-all ${
+          className={`p-4 rounded-2xl border-2 flex items-center sm:flex-col gap-3 text-left sm:text-center transition-all focus-visible:ring-2 focus-visible:ring-emerald-500 ${
             selectedMood === "GOOD"
               ? "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 shadow-sm"
               : "border-slate-200 dark:border-slate-800 hover:border-emerald-300 hover:bg-emerald-50/30"
           }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center text-2xl shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center text-2xl shrink-0" aria-hidden="true">
             😄
           </div>
           <div>
@@ -147,18 +148,19 @@ export function DailyCheckinCard() {
 
         <button
           type="button"
+          aria-label="I am feeling okay, managing fine"
           onClick={() => {
             setSelectedMood("OKAY")
             handleSubmit("OKAY")
           }}
           disabled={submitting}
-          className={`p-4 rounded-2xl border-2 flex items-center sm:flex-col gap-3 text-left sm:text-center transition-all ${
+          className={`p-4 rounded-2xl border-2 flex items-center sm:flex-col gap-3 text-left sm:text-center transition-all focus-visible:ring-2 focus-visible:ring-amber-500 ${
             selectedMood === "OKAY"
               ? "border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 shadow-sm"
               : "border-slate-200 dark:border-slate-800 hover:border-amber-300 hover:bg-amber-50/30"
           }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 flex items-center justify-center text-2xl shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-900/50 text-amber-600 flex items-center justify-center text-2xl shrink-0" aria-hidden="true">
             😐
           </div>
           <div>
@@ -169,18 +171,19 @@ export function DailyCheckinCard() {
 
         <button
           type="button"
+          aria-label="I am not feeling well, tired or unwell"
           onClick={() => {
             setSelectedMood("NOT_WELL")
             handleSubmit("NOT_WELL")
           }}
           disabled={submitting}
-          className={`p-4 rounded-2xl border-2 flex items-center sm:flex-col gap-3 text-left sm:text-center transition-all ${
+          className={`p-4 rounded-2xl border-2 flex items-center sm:flex-col gap-3 text-left sm:text-center transition-all focus-visible:ring-2 focus-visible:ring-rose-500 ${
             selectedMood === "NOT_WELL"
               ? "border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 shadow-sm"
               : "border-slate-200 dark:border-slate-800 hover:border-rose-300 hover:bg-rose-50/30"
           }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 flex items-center justify-center text-2xl shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-900/50 text-rose-600 flex items-center justify-center text-2xl shrink-0" aria-hidden="true">
             😔
           </div>
           <div>

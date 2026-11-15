@@ -87,8 +87,16 @@ export function AppShell({ children }) {
 
   return (
     <div className="min-h-screen bg-app-bg dark:bg-app-dark-bg text-navy-900 dark:text-app-dark-text flex flex-col transition-colors duration-200">
+      {/* Skip to Content for Keyboard & Screen Reader Users (WCAG AA) */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 z-50 px-4 py-2 bg-teal-600 text-white font-extrabold text-sm rounded-xl shadow-xl focus:outline-none focus:ring-2 focus:ring-white"
+      >
+        Skip to main content
+      </a>
+
       {/* Desktop Top Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-app-dark-surface/80 border-b border-app-border dark:border-app-dark-border px-4 lg:px-8 py-3">
+      <header role="banner" className="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-app-dark-surface/80 border-b border-app-border dark:border-app-dark-border px-4 lg:px-8 py-3">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
           {/* Logo & Tagline */}
           <div className="flex items-center gap-3">
@@ -158,7 +166,8 @@ export function AppShell({ children }) {
               whileTap={{ scale: 0.95 }}
               onClick={() => setVoiceOpen(true)}
               title="DawaSaathi AI Voice Companion"
-              className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-3.5 py-2 rounded-2xl text-xs md:text-sm font-bold shadow-soft-sm shadow-teal-500/20"
+              aria-label="Open AI voice companion"
+              className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white px-3.5 py-2 rounded-2xl text-xs md:text-sm font-bold shadow-soft-sm shadow-teal-500/20 focus-visible:ring-2 focus-visible:ring-teal-400"
             >
               <Mic className="w-4 h-4" />
               <span className="hidden sm:inline">AI Voice</span>
@@ -168,12 +177,13 @@ export function AppShell({ children }) {
             <SosTopBarButton />
 
             {/* Font Size Toggle (A / A+ / A++) */}
-            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold" role="group" aria-label="Font size controls">
               {fontOptions.map((f) => (
                 <button
                   key={f.val}
                   onClick={() => setFontSize(f.val)}
-                  className={`px-2 py-1 rounded-lg transition-colors ${
+                  aria-label={`Set font size to ${f.label}`}
+                  className={`px-2 py-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-teal-500 ${
                     fontSize === f.val
                       ? "bg-white dark:bg-app-dark-surface text-teal-600 dark:text-teal-400 shadow-soft-sm"
                       : "text-slate-500 hover:text-navy-900 dark:hover:text-white"
@@ -185,12 +195,13 @@ export function AppShell({ children }) {
             </div>
 
             {/* Language Toggle (EN / हिं / ગુજ) */}
-            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold">
+            <div className="hidden md:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl text-xs font-bold" role="group" aria-label="Language selection">
               {langOptions.map((l) => (
                 <button
                   key={l.val}
                   onClick={() => setLanguage(l.val)}
-                  className={`px-2 py-1 rounded-lg transition-colors ${
+                  aria-label={`Switch language to ${l.label}`}
+                  className={`px-2 py-1 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-teal-500 ${
                     language === l.val
                       ? "bg-white dark:bg-app-dark-surface text-teal-600 dark:text-teal-400 shadow-soft-sm"
                       : "text-slate-500 hover:text-navy-900 dark:hover:text-white"
@@ -204,8 +215,9 @@ export function AppShell({ children }) {
             {/* Dark Mode Toggle */}
             <button
               onClick={toggleTheme}
-              className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-navy-900 dark:hover:text-white transition-colors focus-visible:ring-2 focus-visible:ring-teal-500"
               title="Toggle Dark Mode"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             >
               {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
@@ -213,7 +225,8 @@ export function AppShell({ children }) {
             {/* Notifications Bell */}
             <NavLink
               to="/notifications"
-              className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-navy-900 dark:hover:text-white relative transition-colors"
+              aria-label="View notifications and alert history"
+              className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 hover:text-navy-900 dark:hover:text-white relative transition-colors focus-visible:ring-2 focus-visible:ring-teal-500"
             >
               <Bell className="w-5 h-5" />
               <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-teal-500 rounded-full border-2 border-white dark:border-app-dark-surface" />
@@ -232,7 +245,8 @@ export function AppShell({ children }) {
               <button
                 onClick={logout}
                 title="Log out"
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                aria-label="Log out of account"
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors focus-visible:ring-2 focus-visible:ring-red-400"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -245,7 +259,7 @@ export function AppShell({ children }) {
       <SosActiveBanner />
 
       {/* Main Page Body */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-8 pb-24 md:pb-8">
+      <main id="main-content" role="main" tabIndex="-1" className="flex-1 w-full max-w-7xl mx-auto px-4 lg:px-8 py-6 md:py-8 pb-24 md:pb-8 focus:outline-none">
         <ErrorBoundary>{children}</ErrorBoundary>
       </main>
 

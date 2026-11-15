@@ -39,7 +39,7 @@ class SOSEvent(Base):
     escalated_at = Column(DateTime(timezone=True), nullable=True)
     
     # Incident classification (e.g. GENERAL_SOS, OVERDOSE, WRONG_MEDICINE, ADVERSE_REACTION)
-    incident_type = Column(String(50), default="GENERAL_SOS", nullable=True)
+    incident_type = Column(String(50), default="GENERAL_SOS", nullable=True, index=True)
     medication_details = Column(Text, nullable=True)
 
     notes = Column(Text, nullable=True)
