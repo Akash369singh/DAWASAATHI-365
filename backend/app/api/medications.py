@@ -147,6 +147,7 @@ def delete_medication(
 
 
 @router.patch("/{med_id}/refill")
+@router.post("/{med_id}/refill")
 def refill_medication_stock(
     med_id: int,
     add_count: int = 30,

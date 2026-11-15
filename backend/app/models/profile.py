@@ -46,3 +46,4 @@ class Profile(Base):
     care_tasks = relationship("CareTask", back_populates="profile", cascade="all, delete-orphan")
     family_messages = relationship("FamilyMessage", back_populates="profile", cascade="all, delete-orphan")
     sos_events = relationship("SOSEvent", back_populates="profile", cascade="all, delete-orphan")
+    checkins = relationship("CheckIn", back_populates="profile", cascade="all, delete-orphan")

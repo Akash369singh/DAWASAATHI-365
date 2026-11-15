@@ -22,17 +22,20 @@ export function HealthInsightsPage() {
   const [activeTab, setActiveTab] = useState("30d") // 'today' | '7d' | '30d'
   const [stats, setStats] = useState(null)
   const [insights, setInsights] = useState(null)
+  const [checkinHistory, setCheckinHistory] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [statsData, insightsData] = await Promise.all([
-          api.getAdherenceStats(),
-          api.getAiInsights(),
+        const [statsData, insightsData, checkinsData] = await Promise.all([
+          api.getAdherenceStats().catch(() => null),
+          api.getAiInsights().catch(() => null),
+          api.getCheckinHistory(14).catch(() => []),
         ])
         setStats(statsData)
         setInsights(insightsData)
+        setCheckinHistory(Array.isArray(checkinsData) ? checkinsData : [])
       } catch (err) {
         console.error("Failed loading insights:", err)
       } finally {
@@ -157,6 +160,57 @@ export function HealthInsightsPage() {
             scheduled doses. Green blocks represent consistent adherence.
           </p>
         </div>
+      </div>
+
+      {/* Feature 4: 14-Day Wellbeing Strip */}
+      <div className="bg-white dark:bg-app-dark-surface rounded-3xl border border-app-border dark:border-app-dark-border p-6 shadow-soft-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="text-xs font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+              Feature 4 • Daily Check-in Trend
+            </div>
+            <h3 className="text-lg font-black text-navy-900 dark:text-white mt-0.5">
+              14-Day Elder Wellbeing Strip
+            </h3>
+          </div>
+          <div className="flex items-center gap-3 text-xs font-semibold text-slate-500">
+            <span className="flex items-center gap-1">🟢 Good</span>
+            <span className="flex items-center gap-1">🟡 Okay</span>
+            <span className="flex items-center gap-1">🔴 Not Well</span>
+          </div>
+        </div>
+
+        {/* 14-Day Strip Pills */}
+        <div className="grid grid-cols-7 sm:grid-cols-14 gap-2 pt-1">
+          {Array.from({ length: 14 }).map((_, idx) => {
+            const d = new Date()
+            d.setDate(d.getDate() - (13 - idx))
+            const dStr = d.toISOString().split("T")[0]
+            const match = checkinHistory.find((c) => c.checkin_date === dStr)
+
+            const moodInfo = {
+              GOOD: { icon: "😄", color: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300" },
+              OKAY: { icon: "😐", color: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300" },
+              NOT_WELL: { icon: "😔", color: "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-950/60 dark:text-rose-300" },
+            }[match?.mood] || { icon: "•", color: "bg-slate-100 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-600" }
+
+            return (
+              <div
+                key={idx}
+                className={`flex flex-col items-center justify-center p-2 rounded-2xl border text-center transition-all ${moodInfo.color}`}
+                title={match ? `${dStr}: ${match.mood} ${match.note ? `("${match.note}")` : ""}` : `${dStr}: No check-in`}
+              >
+                <span className="text-[10px] font-bold opacity-75">{d.toLocaleDateString("en-US", { weekday: "narrow" })}</span>
+                <span className="text-sm font-black my-0.5">{moodInfo.icon}</span>
+                <span className="text-[9px] font-mono opacity-80">{d.getDate()}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        <p className="text-xs text-slate-400 leading-relaxed pt-1">
+          Each day represents the elder's daily self-reported wellbeing. When "Not Well" or 3 in 5 days are "Okay/Not Well", proactive neutral notifications are sent to caretakers.
+        </p>
       </div>
 
       {/* AI Plain-Language Health Summary Card */}

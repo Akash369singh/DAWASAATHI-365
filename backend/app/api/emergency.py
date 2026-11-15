@@ -1,6 +1,6 @@
 from datetime import datetime, timezone, timedelta
 import zoneinfo
-from typing import Optional, List
+from typing import Optional, List, Union
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -40,7 +40,7 @@ class MedicationIncidentRequest(BaseModel):
     incident_type: str = "OVERDOSE"  # OVERDOSE, WRONG_MEDICINE, ADVERSE_REACTION, ACCIDENTAL_DOUBLE_DOSE
     medication_name: Optional[str] = None
     dosage: Optional[str] = None
-    symptoms: Optional[str] = None
+    symptoms: Optional[Union[str, List[str]]] = None
     notes: Optional[str] = None
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -251,7 +251,8 @@ def trigger_medication_incident_sos(
     now_utc = datetime.now(timezone.utc)
     now_local_str = now_utc.astimezone(user_tz).strftime("%I:%M %p on %A, %b %d")
 
-    med_details_str = f"Medicine: {payload.medication_name or 'Unspecified'} | Dosage: {payload.dosage or 'N/A'} | Symptoms: {payload.symptoms or 'None'}"
+    symptoms_text = ", ".join(payload.symptoms) if isinstance(payload.symptoms, list) else (payload.symptoms or "None")
+    med_details_str = f"Medicine: {payload.medication_name or 'Unspecified'} | Dosage: {payload.dosage or 'N/A'} | Symptoms: {symptoms_text}"
 
     # 1. Create SOSEvent
     sos = SOSEvent(

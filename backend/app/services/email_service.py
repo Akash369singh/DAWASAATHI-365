@@ -489,3 +489,271 @@ DawaSaathi 365 Emergency Hub
 </html>
 """
     return subject, html_body, text_body
+
+
+def build_daily_checkin_email(
+    elder_name: str,
+    good_url: str,
+    okay_url: str,
+    not_well_url: str,
+) -> tuple[str, str, str]:
+    subject = f"☀️ Good morning {elder_name}, how are you feeling today?"
+    
+    text_body = f"""
+Hello {elder_name},
+
+How are you feeling today? Tap one choice below to check in with your family (one-click, no password needed):
+
+🟢 Good (Feeling energetic & well):
+👉 {good_url}
+
+🟡 Okay (Doing fine):
+👉 {okay_url}
+
+🔴 Not well (Feeling uneasy or weak):
+👉 {not_well_url}
+
+With love & care,
+DawaSaathi 365 Daily Wellbeing Companion
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 24px; padding: 36px 32px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px rgba(11,31,58,0.06); text-align: center;">
+    <div style="display: inline-block; font-size: 32px; margin-bottom: 12px;">☀️</div>
+    <h2 style="color: #0B1F3A; font-size: 24px; font-weight: 800; margin: 0 0 8px 0;">How are you feeling today, {elder_name}?</h2>
+    <p style="color: #64748B; font-size: 15px; margin: 0 0 28px 0;">Tap one of the buttons below to let your family know with one click (no login needed):</p>
+
+    <div style="margin: 20px 0; display: flex; flex-direction: column; gap: 14px;">
+      <a href="{good_url}" style="display: block; background-color: #ECFDF5; border: 2px solid #10B981; color: #065F46; text-decoration: none; padding: 18px 24px; font-size: 18px; font-weight: 800; border-radius: 16px; box-shadow: 0 2px 8px rgba(16,185,129,0.15);">
+        😄 Good — Feeling great & active
+      </a>
+      <a href="{okay_url}" style="display: block; background-color: #FFFBEB; border: 2px solid #F59E0B; color: #92400E; text-decoration: none; padding: 18px 24px; font-size: 18px; font-weight: 800; border-radius: 16px; box-shadow: 0 2px 8px rgba(245,158,11,0.15); margin-top: 10px;">
+        😐 Okay — Managing fine
+      </a>
+      <a href="{not_well_url}" style="display: block; background-color: #FEF2F2; border: 2px solid #EF4444; color: #991B1B; text-decoration: none; padding: 18px 24px; font-size: 18px; font-weight: 800; border-radius: 16px; box-shadow: 0 2px 8px rgba(239,68,68,0.15); margin-top: 10px;">
+        😔 Not Well — Feeling weak or uneasy
+      </a>
+    </div>
+
+    <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 28px 0 20px 0;" />
+    <p style="font-size: 13px; color: #94A3B8; margin: 0;">
+      DawaSaathi 365 Daily Wellbeing Circuit • The elder stays in control
+    </p>
+  </div>
+</body>
+</html>
+"""
+    return subject, html_body, text_body
+
+
+def build_checkin_caretaker_notice_email(
+    elder_name: str,
+    recipient_name: str,
+    message_text: str,
+) -> tuple[str, str, str]:
+    subject = f"ℹ️ Wellbeing Update: {message_text}"
+    
+    text_body = f"""
+Hello {recipient_name},
+
+This is a neutral daily wellbeing update:
+{elder_name} {message_text.lower()}
+
+Please consider giving them a gentle call to check in if convenient.
+
+DawaSaathi 365 Care Team
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 32px; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(11,31,58,0.05);">
+    <div style="display: inline-block; background: #FEF3C7; color: #B45309; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; margin-bottom: 14px;">
+      ℹ️ WELLBEING OBSERVATION
+    </div>
+    <h2 style="color: #0B1F3A; font-size: 22px; margin: 0 0 12px 0;">Check-in Update for {elder_name}</h2>
+    <p style="font-size: 16px; color: #334155; line-height: 1.5; margin: 0 0 20px 0;">
+      Hello <strong>{recipient_name}</strong>,<br/>
+      {message_text}
+    </p>
+    <div style="background: #F1F5F9; padding: 14px 18px; border-radius: 12px; font-size: 14px; color: #475569;">
+      💡 Tip: A quick caring phone call or chat can help bring peace of mind.
+    </div>
+    <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0 16px 0;" />
+    <p style="font-size: 12px; color: #94A3B8; text-align: center; margin: 0;">
+      DawaSaathi 365 Proactive Care System (Observational pattern notification only, not medical diagnosis)
+    </p>
+  </div>
+</body>
+</html>
+"""
+    return subject, html_body, text_body
+
+
+def build_refill_alert_email(
+    elder_name: str,
+    recipient_name: str,
+    med_name: str,
+    dosage: str,
+    remaining_count: int,
+    days_left: int,
+) -> tuple[str, str, str]:
+    subject = f"📦 Medicine Refill Alert: {med_name} will run out in about {days_left} days for {elder_name}"
+    
+    text_body = f"""
+Hello {recipient_name},
+
+Refill Predictor Notice:
+{elder_name}'s medication {med_name} ({dosage}) has approximately {remaining_count} pills left.
+Based on the daily prescribed dosage, it will run out in about {days_left} days.
+
+Please arrange a refill soon to avoid missed doses.
+
+DawaSaathi 365 Pharmacy Refill Predictor
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border-radius: 20px; padding: 32px; border: 1px solid #E2E8F0; box-shadow: 0 4px 12px rgba(11,31,58,0.05);">
+    <div style="display: inline-block; background: #FEF3C7; color: #B45309; padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 800; margin-bottom: 14px;">
+      📦 REFILL PREDICTOR
+    </div>
+    <h2 style="color: #0B1F3A; font-size: 22px; margin: 0 0 12px 0;">Refill Needed Soon for {elder_name}</h2>
+    <p style="font-size: 15px; color: #475569; line-height: 1.5; margin: 0 0 20px 0;">
+      Hello <strong>{recipient_name}</strong>,<br/>
+      Based on the daily schedule, <strong>{med_name}</strong> will run out in approximately <strong>{days_left} days</strong> ({remaining_count} pills remaining).
+    </p>
+
+    <div style="background: #FFFBEB; border-left: 4px solid #F59E0B; padding: 16px 20px; border-radius: 12px; margin: 20px 0;">
+      <div style="font-size: 18px; font-weight: 800; color: #92400E;">{med_name} <span style="font-size: 14px; font-weight: 600; color: #B45309;">({dosage})</span></div>
+      <div style="font-size: 14px; color: #B45309; margin-top: 4px;">Remaining: <strong>{remaining_count} pills</strong> (approx. {days_left} days left)</div>
+    </div>
+
+    <p style="font-size: 14px; color: #64748B;">Please order or pick up the medicine before the current strip runs out.</p>
+
+    <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0 16px 0;" />
+    <p style="font-size: 12px; color: #94A3B8; text-align: center; margin: 0;">
+      DawaSaathi 365 Closed-Loop Refill Circuit
+    </p>
+  </div>
+</body>
+</html>
+"""
+    return subject, html_body, text_body
+
+
+def build_weekly_digest_email(
+    elder_name: str,
+    recipient_name: str,
+    adherence_pct: float,
+    missed_doses: list,
+    checkin_trend: str,
+    upcoming_appointments: list,
+    refills_due: list,
+    gemini_summary: str,
+    hide_medicine_names: bool = False,
+) -> tuple[str, str, str]:
+    subject = f"📊 Weekly Family Care Digest for {elder_name} ({adherence_pct:.0f}% Adherence)"
+
+    missed_text = "\n".join([f"• {m['medication']} at {m['time']}" for m in missed_doses]) if missed_doses else "None! 100% taken on time."
+    refills_text = "\n".join([f"• {r['name']} ({r['days_left']} days left)" for r in refills_due]) if refills_due else "All medications stocked."
+    apts_text = "\n".join([f"• {a['doctor']} ({a['date_time']})" for a in upcoming_appointments]) if upcoming_appointments else "No appointments scheduled for next week."
+
+    text_body = f"""
+Hello {recipient_name},
+
+Here is the weekly health digest for {elder_name}:
+📈 Medication Adherence: {adherence_pct:.1f}%
+☀️ Daily Wellbeing Trend: {checkin_trend}
+
+Missed Doses:
+{missed_text}
+
+Upcoming Doctor Appointments:
+{apts_text}
+
+Medication Refills Due:
+{refills_text}
+
+Family Care Brief:
+"{gemini_summary}"
+
+With love & care,
+DawaSaathi 365 Weekly Family Digest
+"""
+
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border-radius: 24px; padding: 36px 32px; border: 1px solid #E2E8F0; box-shadow: 0 4px 16px rgba(11,31,58,0.06);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #E2E8F0; padding-bottom: 16px; margin-bottom: 24px;">
+      <div>
+        <span style="font-size: 22px; font-weight: 800; color: #0B1F3A;">DawaSaathi 365</span>
+        <span style="display: block; font-size: 12px; color: #14B8A6; font-weight: 700; text-transform: uppercase;">Weekly Family Digest</span>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-size: 24px; font-weight: 900; color: {'#10B981' if adherence_pct >= 85 else '#F59E0B' if adherence_pct >= 70 else '#EF4444'};">{adherence_pct:.0f}%</span>
+        <span style="display: block; font-size: 11px; color: #64748B;">7-Day Adherence</span>
+      </div>
+    </div>
+
+    <h2 style="color: #0B1F3A; font-size: 20px; font-weight: 800; margin: 0 0 12px 0;">Weekly Care Summary for {elder_name}</h2>
+    
+    <!-- AI Brief Box -->
+    <div style="background: #F0FDFA; border-left: 4px solid #14B8A6; padding: 16px 20px; border-radius: 12px; margin: 18px 0;">
+      <div style="font-size: 12px; font-weight: 800; color: #0F766E; text-transform: uppercase;">Care Brief</div>
+      <p style="font-size: 14px; color: #134E4A; margin: 6px 0 0 0; line-height: 1.5; font-style: italic;">
+        "{gemini_summary}"
+      </p>
+    </div>
+
+    <!-- Key Metrics Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0;">
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 12px;">
+        <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Daily Wellbeing</div>
+        <div style="font-size: 14px; font-weight: 700; color: #1E293B; margin-top: 4px;">{checkin_trend}</div>
+      </div>
+      <div style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 14px; border-radius: 12px;">
+        <div style="font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase;">Missed Doses</div>
+        <div style="font-size: 14px; font-weight: 700; color: {'#10B981' if not missed_doses else '#EF4444'}; margin-top: 4px;">
+          {len(missed_doses)} this week
+        </div>
+      </div>
+    </div>
+
+    <!-- Upcoming Appointments -->
+    <div style="margin: 20px 0; padding: 16px; background: #EFF6FF; border-radius: 14px; border: 1px solid #BFDBFE;">
+      <div style="font-size: 12px; font-weight: 800; color: #1D4ED8; text-transform: uppercase;">🗓️ Appointments Next Week</div>
+      <p style="font-size: 13px; color: #1E3A8A; margin: 6px 0 0 0;">
+        {apts_text.replace(chr(10), '<br/>')}
+      </p>
+    </div>
+
+    <!-- Refills Due -->
+    {f'''
+    <div style="margin: 20px 0; padding: 16px; background: #FFFBEB; border-radius: 14px; border: 1px solid #FDE68A;">
+      <div style="font-size: 12px; font-weight: 800; color: #B45309; text-transform: uppercase;">📦 Refills Needed Soon</div>
+      <p style="font-size: 13px; color: #78350F; margin: 6px 0 0 0;">
+        {refills_text.replace(chr(10), '<br/>')}
+      </p>
+    </div>
+    ''' if refills_due else ''}
+
+    <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 24px 0 16px 0;" />
+    <p style="font-size: 12px; color: #94A3B8; text-align: center; margin: 0;">
+      DawaSaathi 365 • Proactive Weekly Family Coordination
+    </p>
+  </div>
+</body>
+</html>
+"""
+    return subject, html_body, text_body
+
+

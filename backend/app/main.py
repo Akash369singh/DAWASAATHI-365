@@ -25,6 +25,7 @@ from app.api.demo import router as demo_router
 from app.api.tasks import router as tasks_router
 from app.api.community import router as community_router
 from app.api.emergency_card import router as emergency_card_router
+from app.api.checkins import router as checkins_router
 
 
 @asynccontextmanager
@@ -74,6 +75,7 @@ app.include_router(demo_router)
 app.include_router(tasks_router)
 app.include_router(community_router)
 app.include_router(emergency_card_router)
+app.include_router(checkins_router)
 
 
 @app.get("/", tags=["General"])
@@ -88,6 +90,7 @@ def root():
 
 
 @app.get("/health", tags=["Health"])
+@app.get("/api/health", tags=["Health"])
 def health_check(db: Session = Depends(get_db)):
     """Health check verifying API responsiveness and live DB connectivity."""
     db_connected = False

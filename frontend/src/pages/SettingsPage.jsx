@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Settings, Sliders, Globe, Type, RefreshCw, ShieldCheck, Check } from "lucide-react"
+import { Settings, Sliders, Globe, Type, RefreshCw, ShieldCheck, Check, Mail } from "lucide-react"
 import { api } from "../lib/api"
 import { useAuth } from "../context/AuthContext"
 import { useSettings } from "../context/SettingsContext"
@@ -23,6 +23,22 @@ export function SettingsPage() {
   const [esc2, setEsc2] = useState(30)
   const [saved, setSaved] = useState(false)
   const [reseeding, setReseeding] = useState(false)
+  const [sendingDigest, setSendingDigest] = useState(false)
+  const [digestStatus, setDigestStatus] = useState("")
+
+  const handleSendTestDigest = async () => {
+    setSendingDigest(true)
+    setDigestStatus("")
+    try {
+      const res = await api.triggerWeeklyDigest()
+      setDigestStatus(res.message || "Weekly digest dispatched to all members!")
+      setTimeout(() => setDigestStatus(""), 6000)
+    } catch (err) {
+      alert("Failed to send test digest: " + err.message)
+    } finally {
+      setSendingDigest(false)
+    }
+  }
 
   const handleSaveTiming = async () => {
     try {
@@ -188,6 +204,38 @@ export function SettingsPage() {
             </Button>
           </div>
         </div>
+      </div>
+
+      {/* Feature 6: Weekly Family Digest Testing */}
+      <div className="bg-white dark:bg-app-dark-surface rounded-3xl border border-app-border dark:border-app-dark-border p-6 shadow-soft-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h4 className="font-bold text-sm text-navy-900 dark:text-white">
+              Weekly Family Digest (Sunday 6 PM)
+            </h4>
+            <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950 text-teal-800 dark:text-teal-300 uppercase">
+              Feature 6
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Sends weekly adherence %, missed doses with times, check-in trend, upcoming appointments, refills due, and Gemini brief.
+          </p>
+          {digestStatus && (
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+              ✓ {digestStatus}
+            </p>
+          )}
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={Mail}
+          loading={sendingDigest}
+          onClick={handleSendTestDigest}
+          className="shrink-0"
+        >
+          Send Test Digest Now
+        </Button>
       </div>
 
       {/* Hackathon Reseed & Evaluation Utility */}

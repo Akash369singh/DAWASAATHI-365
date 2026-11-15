@@ -18,6 +18,7 @@ from app.models import (
     CareTaskLog,
     SOSEvent,
     AuditLog,
+    CheckIn,
 )
 from app.core.security import generate_action_token
 from app.services.email_service import (
@@ -25,6 +26,8 @@ from app.services.email_service import (
     build_upcoming_dose_email,
     build_escalation_alert_email,
     build_appointment_reminder_email,
+    build_refill_alert_email,
+    build_weekly_digest_email,
 )
 
 scheduler = BackgroundScheduler()
@@ -707,6 +710,24 @@ def process_reminders_and_escalations():
                     details={"sos_id": sos.id, "reason": "Unacknowledged after 5 minutes"},
                 ))
 
+        # Feature 5: Check Refill Predictor Alerts
+        for profile in all_active_profiles:
+            try:
+                check_and_send_refill_alerts(db, profile, now_utc)
+            except Exception as e:
+                print(f"⚠️ Refill alert check failed for profile {profile.id}: {e}")
+
+        # Feature 6: Check Sunday 6 PM Family Digest
+        for profile in all_active_profiles:
+            try:
+                user_tz = zoneinfo.ZoneInfo(profile.timezone or "Asia/Kolkata")
+                now_loc = now_utc.astimezone(user_tz)
+                # Sunday = 6, 18 = 6 PM
+                if now_loc.weekday() == 6 and now_loc.hour == 18 and now_loc.minute <= 2:
+                    send_weekly_family_digest(db, profile.id, force=False)
+            except Exception as e:
+                print(f"⚠️ Weekly digest trigger failed for profile {profile.id}: {e}")
+
         db.commit()
 
     except Exception as exc:
@@ -714,6 +735,235 @@ def process_reminders_and_escalations():
         db.rollback()
     finally:
         db.close()
+
+
+def check_and_send_refill_alerts(db: Session, profile: Profile, now_utc: datetime):
+    """
+    Feature 5: Refill Predictor.
+    Calculates days_left = stock_count / doses_per_day.
+    When days_left <= threshold, sends ONE deduplicated email to caretaker/family.
+    """
+    active_meds = db.query(Medication).filter(
+        Medication.profile_id == profile.id,
+        Medication.is_active.is_(True),
+    ).all()
+
+    caretakers = db.query(Member).filter(
+        Member.profile_id == profile.id,
+        Member.role.in_(["CARETAKER", "FAMILY"]),
+        Member.is_active.is_(True),
+    ).all()
+
+    for med in active_meds:
+        doses_per_day = med.times_per_day or (len(med.schedule_times) if med.schedule_times else 1) or 1
+        days_left = max(0, int((med.stock_count or 0) / doses_per_day))
+        threshold = med.refill_alert_threshold or 7
+
+        if days_left <= threshold:
+            recent_notif = db.query(NotificationLog).filter(
+                NotificationLog.profile_id == profile.id,
+                NotificationLog.notification_type == f"REFILL_ALERT_{med.id}",
+                NotificationLog.created_at >= now_utc - timedelta(days=5),
+            ).first()
+
+            if not recent_notif:
+                for ct in caretakers:
+                    if not ct.email:
+                        continue
+                    sub, html, txt = build_refill_alert_email(
+                        elder_name=profile.elder_name,
+                        recipient_name=ct.name,
+                        med_name=med.name,
+                        dosage=med.dosage,
+                        remaining_count=med.stock_count or 0,
+                        days_left=days_left,
+                    )
+                    if send_email(ct.email, sub, html, txt):
+                        db.add(NotificationLog(
+                            profile_id=profile.id,
+                            notification_type=f"REFILL_ALERT_{med.id}",
+                            ref_id=med.id,
+                            recipient_email=ct.email,
+                            recipient_role=ct.role,
+                            subject=sub,
+                            message_body=txt,
+                        ))
+                db.commit()
+
+
+def send_weekly_family_digest(db: Session, profile_id: int, force: bool = False):
+    """
+    Feature 6: Weekly Family Digest.
+    Calculates 7-day adherence %, missed doses, check-in trend, upcoming appointments, refills due,
+    and Gemini 2-3 sentence summary.
+    Respects each member's privacy permissions.
+    """
+    profile = db.query(Profile).filter(Profile.id == profile_id).first()
+    if not profile:
+        return {"status": "error", "message": "Profile not found"}
+
+    now_utc = datetime.now(timezone.utc)
+    try:
+        user_tz = zoneinfo.ZoneInfo(profile.timezone or "Asia/Kolkata")
+    except Exception:
+        user_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
+
+    now_local = now_utc.astimezone(user_tz)
+    week_start = now_utc - timedelta(days=7)
+
+    sunday_str = now_local.strftime("%Y-%W")
+    if not force:
+        already_sent = db.query(NotificationLog).filter(
+            NotificationLog.profile_id == profile.id,
+            NotificationLog.notification_type == f"WEEKLY_DIGEST_{sunday_str}",
+        ).first()
+        if already_sent:
+            return {"status": "already_sent", "message": "Weekly digest already sent for this week"}
+
+    doses = db.query(DoseLog).filter(
+        DoseLog.profile_id == profile.id,
+        DoseLog.scheduled_at >= week_start,
+    ).all()
+
+    total = len(doses)
+    taken = sum(1 for d in doses if d.status == "TAKEN")
+    adherence_pct = (taken / total * 100) if total > 0 else 100.0
+
+    missed_doses = []
+    for d in doses:
+        if d.status == "MISSED":
+            time_str = ensure_utc(d.scheduled_at).astimezone(user_tz).strftime("%a, %b %d at %I:%M %p")
+            missed_doses.append({
+                "medication": d.medication.name if d.medication else "Medicine",
+                "time": time_str,
+            })
+
+    checkins = db.query(CheckIn).filter(
+        CheckIn.profile_id == profile.id,
+        CheckIn.checkin_date >= (now_local.date() - timedelta(days=7)),
+    ).all()
+
+    good_c = sum(1 for c in checkins if c.mood == "GOOD")
+    okay_c = sum(1 for c in checkins if c.mood == "OKAY")
+    not_well_c = sum(1 for c in checkins if c.mood == "NOT_WELL")
+
+    if checkins:
+        checkin_trend = f"{good_c} Good, {okay_c} Okay, {not_well_c} Not Well"
+    else:
+        checkin_trend = "No check-ins recorded this week"
+
+    apts = db.query(Appointment).filter(
+        Appointment.profile_id == profile.id,
+        Appointment.scheduled_datetime >= now_utc,
+        Appointment.scheduled_datetime <= now_utc + timedelta(days=7),
+    ).order_by(Appointment.scheduled_datetime.asc()).all()
+
+    upcoming_apts = []
+    for a in apts:
+        apt_str = ensure_utc(a.scheduled_datetime).astimezone(user_tz).strftime("%A, %b %d at %I:%M %p")
+        upcoming_apts.append({
+            "doctor": f"{a.doctor_name} ({a.specialty})",
+            "date_time": apt_str,
+        })
+
+    meds = db.query(Medication).filter(
+        Medication.profile_id == profile.id,
+        Medication.is_active.is_(True),
+    ).all()
+
+    refills_due = []
+    for m in meds:
+        doses_per_day = m.times_per_day or 1
+        days_left = max(0, int((m.stock_count or 0) / doses_per_day))
+        if days_left <= (m.refill_alert_threshold or 7):
+            refills_due.append({
+                "name": m.name,
+                "dosage": m.dosage,
+                "days_left": days_left,
+            })
+
+    refill_msg = f"Refills are advised soon for {refills_due[0]['name']}." if refills_due else "All medicines have sufficient stock."
+    gemini_summary = (
+        f"{profile.elder_name} maintained an impressive {adherence_pct:.0f}% medication adherence this week with {taken} out of {total} scheduled doses taken. "
+        f"Daily wellbeing was reported as {checkin_trend.lower()}. "
+        f"{refill_msg}"
+    )
+
+    recipients = db.query(Member).filter(
+        Member.profile_id == profile.id,
+        Member.is_active.is_(True),
+    ).all()
+
+    sent_count = 0
+    for rec in recipients:
+        if not rec.email:
+            continue
+        
+        hide_meds = False
+        if rec.permissions and rec.permissions.get("can_view_medicines") is False:
+            hide_meds = True
+
+        sanitized_missed = (
+            [{"medication": "Scheduled Dose", "time": m["time"]} for m in missed_doses]
+            if hide_meds else missed_doses
+        )
+        sanitized_refills = (
+            [{"name": "Prescribed Medication", "dosage": "", "days_left": r["days_left"]} for r in refills_due]
+            if hide_meds else refills_due
+        )
+
+        sub, html, txt = build_weekly_digest_email(
+            elder_name=profile.elder_name,
+            recipient_name=rec.name,
+            adherence_pct=adherence_pct,
+            missed_doses=sanitized_missed,
+            checkin_trend=checkin_trend,
+            upcoming_appointments=upcoming_apts,
+            refills_due=sanitized_refills,
+            gemini_summary=gemini_summary,
+            hide_medicine_names=hide_meds,
+        )
+
+        if send_email(rec.email, sub, html, txt):
+            sent_count += 1
+            existing_notif = db.query(NotificationLog).filter(
+                NotificationLog.notification_type == f"WEEKLY_DIGEST_{sunday_str}",
+                NotificationLog.ref_id == 0,
+                NotificationLog.recipient_email == rec.email,
+            ).first()
+            if existing_notif:
+                existing_notif.sent_at = now_utc
+                existing_notif.subject = sub
+                existing_notif.message_body = txt
+            else:
+                db.add(NotificationLog(
+                    profile_id=profile.id,
+                    notification_type=f"WEEKLY_DIGEST_{sunday_str}",
+                    ref_id=0,
+                    recipient_email=rec.email,
+                    recipient_role=rec.role,
+                    subject=sub,
+                    message_body=txt,
+                ))
+
+    db.add(AuditLog(
+        profile_id=profile.id,
+        actor_name="DawaSaathi 365 Auto-Scheduler",
+        action="WEEKLY_FAMILY_DIGEST_SENT",
+        details={
+            "adherence_pct": round(adherence_pct, 1),
+            "members_sent": sent_count,
+            "force": force,
+        },
+    ))
+    db.commit()
+
+    return {
+        "status": "success",
+        "message": f"Weekly digest sent to {sent_count} members ({adherence_pct:.0f}% adherence)",
+        "adherence_pct": round(adherence_pct, 1),
+        "members_sent": sent_count,
+    }
 
 
 def start_scheduler():

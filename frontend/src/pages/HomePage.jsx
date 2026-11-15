@@ -11,6 +11,7 @@ import { ElderLiveWatchCard } from "../components/home/ElderLiveWatchCard"
 import { DailyTasksCard } from "../components/tasks/DailyTasksCard"
 import { FamilyCommunityFeed } from "../components/community/FamilyCommunityFeed"
 import { OmniMedicineEncyclopedia } from "../components/home/OmniMedicineEncyclopedia"
+import { DailyCheckinCard } from "../components/home/DailyCheckinCard"
 import { Skeleton } from "../components/common/Skeleton"
 
 export function HomePage() {
@@ -188,6 +189,9 @@ export function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Daily Check-in Card (Feature 4) */}
+      <DailyCheckinCard />
 
       {/* 2. FAMILY / CARETAKER LIVE WATCH CARD */}
       {isFamilyOrCaretaker && !showElderView && (

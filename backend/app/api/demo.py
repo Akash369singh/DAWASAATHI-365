@@ -82,3 +82,17 @@ def trigger_demo_sos(db: Session = Depends(get_db)):
 
     result = execute_sos_broadcast(demo_payload, elder, profile, db)
     return result
+
+
+@router.post("/trigger-weekly-digest")
+def trigger_demo_weekly_digest(
+    db: Session = Depends(get_db),
+):
+    """Feature 6: Instantly trigger weekly family digest email with adherence and Gemini summary."""
+    from app.services.scheduler_service import send_weekly_family_digest
+
+    profile = db.query(Profile).filter(Profile.code == "CARE-7291").first()
+    if not profile:
+        profile = db.query(Profile).first()
+
+    return send_weekly_family_digest(db, profile.id, force=True)

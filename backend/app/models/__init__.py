@@ -10,6 +10,7 @@ from app.models.vital import HealthVital
 from app.models.task import CareTask, CareTaskLog
 from app.models.community import FamilyMessage
 from app.models.sos_event import SOSEvent
+from app.models.checkin import CheckIn
 
 __all__ = [
     "Profile",
@@ -25,4 +26,5 @@ __all__ = [
     "CareTaskLog",
     "FamilyMessage",
     "SOSEvent",
+    "CheckIn",
 ]

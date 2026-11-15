@@ -261,7 +261,10 @@ export function MedicationsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {medications.map((med) => {
-            const isLowStock = med.stock_count <= med.refill_alert_threshold
+            const dosesPerDay = med.times_per_day || (med.schedule_times?.length || 1) || 1
+            const daysLeft = Math.max(0, Math.floor((med.stock_count || 0) / dosesPerDay))
+            const threshold = med.refill_alert_threshold || 7
+            const isLowStock = daysLeft <= threshold
             return (
               <motion.div
                 key={med.id}
@@ -278,9 +281,16 @@ export function MedicationsPage() {
                       <Pill className="w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-navy-900 dark:text-white leading-tight">
-                        {med.name}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-navy-900 dark:text-white leading-tight">
+                          {med.name}
+                        </h3>
+                        {isLowStock && (
+                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
+                            Refill soon ({daysLeft}d left)
+                          </span>
+                        )}
+                      </div>
                       <div className="text-sm font-bold text-teal-600 dark:text-teal-400 mt-0.5">
                         {med.dosage} • <span className="font-medium text-slate-500">{med.form}</span>
                       </div>
@@ -320,26 +330,26 @@ export function MedicationsPage() {
                   ))}
                 </div>
 
-                {/* Stock info and refill trigger */}
+                {/* Stock info and refill trigger (Feature 5) */}
                 <div className="flex items-center justify-between pt-3 border-t border-app-border dark:border-app-dark-border text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-500">Stock:</span>
+                    <span className="font-semibold text-slate-500">Remaining:</span>
                     <span
                       className={`font-bold ${
-                        isLowStock ? "text-red-500 flex items-center gap-1" : "text-navy-900 dark:text-white"
+                        isLowStock ? "text-amber-600 dark:text-amber-400 flex items-center gap-1" : "text-navy-900 dark:text-white"
                       }`}
                     >
                       {isLowStock && <AlertTriangle className="w-3.5 h-3.5" />}
-                      {med.stock_count} pills left
+                      {med.stock_count} pills (~{daysLeft} days)
                     </span>
                   </div>
 
                   <button
                     onClick={() => handleRefillPills(med.id)}
-                    className="text-teal-600 dark:text-teal-400 hover:underline font-bold flex items-center gap-1"
+                    className="text-teal-600 dark:text-teal-400 hover:text-teal-700 font-extrabold flex items-center gap-1.5 px-3 py-1 rounded-xl bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 transition-colors"
                   >
                     <RotateCcw className="w-3 h-3" />
-                    Refill (+30)
+                    <span>Refilled +30</span>
                   </button>
                 </div>
               </motion.div>

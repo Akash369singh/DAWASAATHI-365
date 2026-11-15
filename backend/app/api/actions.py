@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import DoseLog, ActionToken, AuditLog, SOSEvent, Member, NotificationLog
+from app.models import DoseLog, ActionToken, AuditLog, SOSEvent, Member, NotificationLog, CheckIn, Profile
 from app.core.security import verify_action_token
 from app.services.email_service import send_email, build_sos_ack_notification_email
 
@@ -238,6 +238,81 @@ def execute_magic_action_get(token: str, db: Session = Depends(get_db)):
                     </p>
                     <div style="background: #F1F5F9; padding: 12px 18px; border-radius: 12px; display: inline-block; font-size: 14px; font-weight: 600; color: #334155;">
                         Family will see: "{elder_name} will take it at {snooze_local_str}"
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+        )
+
+    # -------------------------------------------------------------
+    # 2.5 DAILY CHECK-IN ACTIONS (Feature 4)
+    # -------------------------------------------------------------
+    if action == "CHECKIN":
+        mood = payload.get("mood", "GOOD")
+        profile_id = payload.get("profile_id")
+        prof = db.query(Profile).filter(Profile.id == profile_id).first() if profile_id else None
+        elder_name = prof.elder_name if prof else "Elder"
+
+        now_utc = datetime.now(timezone.utc)
+        today_local = now_utc.date()
+
+        existing = db.query(CheckIn).filter(
+            CheckIn.profile_id == profile_id,
+            CheckIn.checkin_date == today_local,
+        ).first()
+
+        if existing:
+            existing.mood = mood
+            existing.member_id = member_id
+        else:
+            db.add(CheckIn(
+                profile_id=profile_id,
+                member_id=member_id,
+                mood=mood,
+                checkin_date=today_local,
+                created_at=now_utc,
+            ))
+
+        if act_token_row:
+            act_token_row.is_used = True
+            act_token_row.used_at = now_utc
+
+        db.add(AuditLog(
+            profile_id=profile_id,
+            member_id=member_id,
+            actor_name="Magic Checkin Link",
+            action="MAGIC_CHECKIN_SUBMITTED",
+            details={"mood": mood, "date": str(today_local)},
+        ))
+        db.commit()
+
+        mood_labels = {
+            "GOOD": ("😄 Feeling Good!", "#10B981", "#ECFDF5", "We are so glad to hear you are feeling energetic and active today!"),
+            "OKAY": ("😐 Doing Okay", "#F59E0B", "#FFFBEB", "Thank you for letting your family know. Take it easy today!"),
+            "NOT_WELL": ("😔 Not Feeling Well", "#EF4444", "#FEF2F2", "Thank you for checking in. We have notified your caretaker so they can call and check on you."),
+        }
+        title, color, bg, desc = mood_labels.get(mood, ("Recorded", "#10B981", "#ECFDF5", "Recorded."))
+
+        return HTMLResponse(
+            content=f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>DawaSaathi 365 - Daily Check-in</title>
+            </head>
+            <body style="margin: 0; padding: 40px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: {bg}; display: flex; align-items: center; justify-content: center; min-height: 80vh;">
+                <div style="max-width: 480px; width: 100%; background: #ffffff; border-radius: 24px; padding: 40px 32px; text-align: center; border: 2px solid {color}; box-shadow: 0 10px 25px rgba(0,0,0,0.06);">
+                    <div style="font-size: 48px; margin-bottom: 16px;">
+                        {"😄" if mood == "GOOD" else "😐" if mood == "OKAY" else "😔"}
+                    </div>
+                    <h1 style="color: #0B1F3A; font-size: 26px; font-weight: 800; margin: 0 0 10px 0;">Check-in Recorded ✓</h1>
+                    <p style="color: #4B5563; font-size: 17px; line-height: 1.5; margin: 0 0 24px 0;">
+                        {desc}
+                    </p>
+                    <div style="background: {bg}; padding: 12px 18px; border-radius: 12px; display: inline-block; font-size: 14px; font-weight: 700; color: {color};">
+                        Status for {elder_name}: {title}
                     </div>
                 </div>
             </body>
