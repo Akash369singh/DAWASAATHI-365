@@ -1,0 +1,12 @@
+fastapi==0.163.0
+uvicorn[standard]==0.54.0
+sqlalchemy==2.1.8
+pydantic==2.14.3
+pydantic-settings==2.16.3
+python-dotenv==1.2.4
+bcrypt==5.0.0
+pyjwt==2.15.1
+itsdangerous==2.2.0
+apscheduler==3.11.3
+python-multipart==0.0.33
+google-genai==3.3.0

@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0B1F3A;
+  --color-accent: #14B8A6;
+  --color-bg: #F7F9FB;
+  --color-surface: #FFFFFF;
+  --color-border: #E6EBF1;
+  --color-success: #16A34A;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --font-scale: 1;
+}
+
+.dark {
+  --color-primary: #E8EEF6;
+  --color-accent: #14B8A6;
+  --color-bg: #0A1424;
+  --color-surface: #101C30;
+  --color-border: #1E2F4D;
+  --color-success: #22C55E;
+  --color-warning: #FBBF24;
+  --color-danger: #F87171;
+}
+
+/* Font scaling for Elder Mode (A / A+ / A++) */
+body.font-normal {
+  font-size: 18px;
+}
+body.font-large {
+  font-size: 21px;
+}
+body.font-xlarge {
+  font-size: 24px;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Print styles for Doctor Visit Brief */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
