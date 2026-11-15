@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 import { useSearchParams, useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { Check, AlertCircle, ArrowRight } from "lucide-react"
+import { api } from "../lib/api"
 
 export function ActionLandingPage() {
   const [searchParams] = useSearchParams()
@@ -20,7 +21,7 @@ export function ActionLandingPage() {
 
     async function execute() {
       try {
-        const res = await fetch(`/api/actions/execute/${encodeURIComponent(token)}`)
+        const res = await api.executeActionToken(token)
         const text = await res.text()
         if (text.includes("Already Acknowledged") || text.includes("Already Processed")) {
           setStatus("already")
