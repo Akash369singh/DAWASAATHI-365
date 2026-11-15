@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ShieldAlert, AlertCircle, CheckCircle2, X } from "lucide-react"
+import { ShieldAlert, AlertCircle, CheckCircle2, X, Pill } from "lucide-react"
 import { api } from "../../lib/api"
 import { useAuth } from "../../context/AuthContext"
+import { MedicationIncidentModal } from "./MedicationIncidentModal"
 
 export function SosModal({ isOpen, onClose }) {
   const { user } = useAuth()
@@ -11,6 +12,7 @@ export function SosModal({ isOpen, onClose }) {
   const [dispatched, setDispatched] = useState(false)
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [showMedIncident, setShowMedIncident] = useState(false)
 
   useEffect(() => {
     let timer
@@ -108,12 +110,25 @@ export function SosModal({ isOpen, onClose }) {
                     </button>
                   </div>
                 ) : (
-                  <button
-                    onClick={startCountdown}
-                    className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-3xl font-black text-xl shadow-lg shadow-red-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    SEND EMERGENCY SOS NOW
-                  </button>
+                  <div className="space-y-3">
+                    <button
+                      onClick={startCountdown}
+                      className="w-full py-5 bg-red-600 hover:bg-red-700 text-white rounded-3xl font-black text-xl shadow-lg shadow-red-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      SEND EMERGENCY SOS NOW
+                    </button>
+
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => setShowMedIncident(true)}
+                        className="w-full py-3 px-4 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 border border-amber-300 dark:border-amber-800 transition-colors"
+                      >
+                        <Pill className="w-4 h-4 text-amber-600" />
+                        <span>Wrong Medicine / Overdose Accident? (दवा की समस्या)</span>
+                      </button>
+                    </div>
+                  </div>
                 )}
               </div>
             ) : (
@@ -145,6 +160,16 @@ export function SosModal({ isOpen, onClose }) {
             )}
           </motion.div>
         </div>
+      )}
+
+      {showMedIncident && (
+        <MedicationIncidentModal
+          isOpen={showMedIncident}
+          onClose={() => {
+            setShowMedIncident(false)
+            handleClose()
+          }}
+        />
       )}
     </AnimatePresence>
   )

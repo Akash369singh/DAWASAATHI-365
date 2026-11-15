@@ -4,8 +4,9 @@ from pydantic import BaseModel, Field
 
 
 class DoseActionRequest(BaseModel):
-    action: str = Field(..., pattern="^(TAKEN|SKIPPED)$")
+    action: Optional[str] = "TAKEN"
     notes: Optional[str] = None
+    confirm_duplicate: Optional[bool] = False
 
 
 class DoseSnoozeRequest(BaseModel):

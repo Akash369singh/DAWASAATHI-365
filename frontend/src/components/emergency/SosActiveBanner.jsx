@@ -80,7 +80,11 @@ export function SosActiveBanner() {
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-black text-sm uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-md text-[11px]">
-                  {isAck ? "SOS In Progress (ACK)" : "Emergency SOS Active"}
+                  {isAck
+                    ? "SOS In Progress (ACK)"
+                    : activeSos.incident_type && activeSos.incident_type !== "GENERAL_SOS"
+                    ? `🚨 MEDICATION EMERGENCY (${activeSos.incident_type.replace(/_/g, " ")})`
+                    : "Emergency SOS Active"}
                 </span>
                 <span className="font-extrabold text-sm sm:text-base">
                   Triggered by {activeSos.triggered_by}
@@ -89,6 +93,12 @@ export function SosActiveBanner() {
                   at {activeSos.created_at_local}
                 </span>
               </div>
+
+              {activeSos.medication_details && (
+                <div className="text-xs font-bold bg-black/20 px-2.5 py-1 rounded-lg mt-1 inline-block">
+                  ⚠️ {activeSos.medication_details}
+                </div>
+              )}
 
               <div className="text-xs opacity-95 flex items-center gap-3 mt-0.5 flex-wrap">
                 {activeSos.maps_url && (

@@ -24,6 +24,7 @@ import {
   Moon,
 } from "lucide-react"
 import { api } from "../../lib/api"
+import { MedicationIncidentModal } from "../emergency/MedicationIncidentModal"
 
 const SUGGESTIONS = [
   { label: "Metformin 500", query: "Metformin 500" },
@@ -42,6 +43,7 @@ export function OmniMedicineEncyclopedia() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState("")
+  const [showIncidentModal, setShowIncidentModal] = useState(false)
 
   // Voice recording state
   const [listening, setListening] = useState(false)
@@ -364,6 +366,16 @@ export function OmniMedicineEncyclopedia() {
                     </div>
                   )}
                 </div>
+
+                {/* Emergency Action */}
+                <button
+                  type="button"
+                  onClick={() => setShowIncidentModal(true)}
+                  className="px-3.5 py-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-300 border border-red-200 dark:border-red-900/50 text-xs font-bold flex items-center gap-1.5 transition-colors shrink-0"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500" />
+                  <span>Accidentally took this? Alert family</span>
+                </button>
               </div>
             </div>
 
@@ -498,6 +510,15 @@ export function OmniMedicineEncyclopedia() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Medication Emergency Modal */}
+      {showIncidentModal && (
+        <MedicationIncidentModal
+          isOpen={showIncidentModal}
+          onClose={() => setShowIncidentModal(false)}
+          defaultMedication={result?.name || query}
+        />
+      )}
     </div>
   )
 }

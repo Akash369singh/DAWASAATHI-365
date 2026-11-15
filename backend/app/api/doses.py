@@ -150,6 +150,38 @@ def mark_dose_taken(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dose log entry not found")
 
     now = datetime.now(timezone.utc)
+
+    # 🚨 Clinical Safety Guard 1: Check if already taken
+    if dose.status == "TAKEN" and not (payload and payload.confirm_duplicate):
+        return {
+            "status": "already_taken_warning",
+            "warning": True,
+            "message": f"This dose of {dose.medication.name if dose.medication else 'medicine'} was already recorded as taken. If an extra tablet was taken accidentally, please report an Emergency Medication Incident.",
+            "dose_id": dose.id,
+            "new_status": dose.status,
+        }
+
+    # 🚨 Clinical Safety Guard 2: Rapid Repeated Dose / Overdose Risk (within 60 mins)
+    recent_take = (
+        db.query(DoseLog)
+        .filter(
+            DoseLog.profile_id == profile.id,
+            DoseLog.medication_id == dose.medication_id,
+            DoseLog.status == "TAKEN",
+            DoseLog.id != dose.id,
+            DoseLog.acted_at >= now - timedelta(minutes=60),
+        )
+        .first()
+    )
+    if recent_take and not (payload and payload.confirm_duplicate):
+        return {
+            "status": "overdose_risk_warning",
+            "warning": True,
+            "message": f"Caution: A dose of {dose.medication.name if dose.medication else 'this medicine'} was already taken within the last 60 minutes. Taking another dose so quickly may cause an accidental overdose.",
+            "dose_id": dose.id,
+            "new_status": dose.status,
+        }
+
     dose.status = "TAKEN"
     dose.acted_at = now
     dose.acted_by_member_id = member.id

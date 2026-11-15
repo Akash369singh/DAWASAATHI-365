@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, Clock, AlertTriangle, Pill, ArrowRight } from "lucide-react"
+import { Check, Clock, AlertTriangle, Pill, ArrowRight, ShieldAlert } from "lucide-react"
 import confetti from "canvas-confetti"
+import { MedicationIncidentModal } from "../emergency/MedicationIncidentModal"
 
 export function HeroNextDose({ nextDose, onTake, onSkip, onSnooze, elderName }) {
   const [taking, setTaking] = useState(false)
@@ -9,6 +10,7 @@ export function HeroNextDose({ nextDose, onTake, onSkip, onSnooze, elderName }) 
   const [showSnoozeOptions, setShowSnoozeOptions] = useState(false)
   const [justTaken, setJustTaken] = useState(false)
   const [countdownText, setCountdownText] = useState("")
+  const [showIncidentModal, setShowIncidentModal] = useState(false)
 
   const handleSnoozeClick = async (minutes) => {
     if (!nextDose || snoozing) return
@@ -281,10 +283,32 @@ export function HeroNextDose({ nextDose, onTake, onSkip, onSnooze, elderName }) 
                   Skip dose
                 </button>
               </div>
+
+              {/* Medication Accident / Overdose SOS Trigger */}
+              <div className="pt-2.5 mt-1 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between gap-2 text-[11px]">
+                <button
+                  type="button"
+                  onClick={() => setShowIncidentModal(true)}
+                  className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-extrabold hover:underline"
+                >
+                  <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                  <span>Took wrong pill or double dose? (दवा गलत या ज्यादा ली?)</span>
+                </button>
+                <span className="text-slate-400 dark:text-slate-500 hidden sm:inline">Immediate family SOS</span>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Medication Emergency Incident Modal */}
+      {showIncidentModal && (
+        <MedicationIncidentModal
+          isOpen={showIncidentModal}
+          onClose={() => setShowIncidentModal(false)}
+          defaultMedication={nextDose?.medication_name}
+        />
+      )}
     </div>
   )
 }

@@ -14,6 +14,7 @@ from app.services.email_service import (
     send_email,
     build_emergency_sos_email,
     build_sos_ack_notification_email,
+    build_medication_emergency_email,
 )
 
 # Route handlers mapped to /api/sos and /api/emergency/sos
@@ -32,6 +33,17 @@ class SOSCreateRequest(BaseModel):
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     notes: Optional[str] = "Emergency SOS button triggered from DawaSaathi 365 App"
+    incident_type: Optional[str] = "GENERAL_SOS"
+
+
+class MedicationIncidentRequest(BaseModel):
+    incident_type: str = "OVERDOSE"  # OVERDOSE, WRONG_MEDICINE, ADVERSE_REACTION, ACCIDENTAL_DOUBLE_DOSE
+    medication_name: Optional[str] = None
+    dosage: Optional[str] = None
+    symptoms: Optional[str] = None
+    notes: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
 
 
 class SOSStatusOut(BaseModel):
@@ -40,6 +52,8 @@ class SOSStatusOut(BaseModel):
     triggered_by: str
     triggered_by_role: Optional[str] = None
     status: str  # OPEN, ACK, RESOLVED
+    incident_type: Optional[str] = "GENERAL_SOS"
+    medication_details: Optional[str] = None
     created_at: datetime
     created_at_local: str
     latitude: Optional[float] = None
@@ -63,6 +77,8 @@ def format_sos_out(sos: SOSEvent, user_tz: zoneinfo.ZoneInfo) -> SOSStatusOut:
         triggered_by=sos.triggered_by,
         triggered_by_role=sos.triggered_by_member.role if sos.triggered_by_member else None,
         status=sos.status,
+        incident_type=sos.incident_type or "GENERAL_SOS",
+        medication_details=sos.medication_details,
         created_at=created_utc,
         created_at_local=local_str,
         latitude=sos.latitude,
@@ -105,6 +121,7 @@ def execute_sos_broadcast(
         latitude=payload.latitude,
         longitude=payload.longitude,
         status="OPEN",
+        incident_type=payload.incident_type or "GENERAL_SOS",
         notes=payload.notes,
         created_at=now_utc,
     )
@@ -211,6 +228,134 @@ def trigger_sos(
 ):
     """Trigger emergency SOS broadcast to all circle emergency contacts."""
     return execute_sos_broadcast(payload, member, profile, db)
+
+
+@router.post("/emergency/medication-incident")
+@router.post("/api/emergency/medication-incident")
+@router.post("/api/sos/medication-incident")
+def trigger_medication_incident_sos(
+    payload: MedicationIncidentRequest,
+    member: Member = Depends(get_current_member),
+    profile: Profile = Depends(get_current_profile),
+    db: Session = Depends(get_db),
+):
+    """
+    Trigger immediate Medication Emergency SOS broadcast to all family & caretakers
+    for wrong medication, accidental double dose, or overdose.
+    """
+    try:
+        user_tz = zoneinfo.ZoneInfo(profile.timezone or "Asia/Kolkata")
+    except Exception:
+        user_tz = zoneinfo.ZoneInfo("Asia/Kolkata")
+
+    now_utc = datetime.now(timezone.utc)
+    now_local_str = now_utc.astimezone(user_tz).strftime("%I:%M %p on %A, %b %d")
+
+    med_details_str = f"Medicine: {payload.medication_name or 'Unspecified'} | Dosage: {payload.dosage or 'N/A'} | Symptoms: {payload.symptoms or 'None'}"
+
+    # 1. Create SOSEvent
+    sos = SOSEvent(
+        profile_id=profile.id,
+        triggered_by=f"{member.name} ({member.role})",
+        triggered_by_member_id=member.id,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        status="OPEN",
+        incident_type=payload.incident_type,
+        medication_details=med_details_str,
+        notes=payload.notes or f"Reported medication incident: {payload.incident_type}",
+        created_at=now_utc,
+    )
+    db.add(sos)
+    db.flush()
+
+    maps_url = f"https://maps.google.com/?q={payload.latitude},{payload.longitude}" if (payload.latitude and payload.longitude) else None
+
+    # 2. Alert all active family members & caretakers
+    recipients = (
+        db.query(Member)
+        .filter(
+            Member.profile_id == profile.id,
+            Member.is_active.is_(True),
+            Member.id != member.id,
+        )
+        .all()
+    )
+
+    alerted = []
+    for rec in recipients:
+        if not rec.email:
+            continue
+
+        magic_token = generate_action_token(
+            action="ACK_SOS",
+            sos_event_id=sos.id,
+            member_id=rec.id,
+        )
+
+        db.add(ActionToken(
+            profile_id=profile.id,
+            member_id=rec.id,
+            token_hash=magic_token,
+            action_type="ACK_SOS",
+            ref_id=sos.id,
+            expires_at=now_utc + timedelta(hours=24),
+        ))
+
+        magic_ack_url = f"{settings.FRONTEND_URL}/api/actions/execute/{magic_token}"
+
+        subject, html_body, text_body = build_medication_emergency_email(
+            elder_name=profile.elder_name,
+            recipient_name=rec.name,
+            incident_type=payload.incident_type,
+            medication_name=payload.medication_name or "Medication",
+            dosage=payload.dosage,
+            symptoms=payload.symptoms,
+            emergency_timestamp=now_local_str,
+            triggered_by=f"{member.name} ({member.role})",
+            maps_url=maps_url,
+            magic_ack_url=magic_ack_url,
+            notes=payload.notes,
+        )
+
+        if send_email(rec.email, subject, html_body, text_body):
+            alerted.append({"name": rec.name, "role": rec.role, "email": rec.email})
+            db.add(NotificationLog(
+                profile_id=profile.id,
+                notification_type="MEDICATION_EMERGENCY_SOS",
+                ref_id=sos.id,
+                recipient_email=rec.email,
+                recipient_role=rec.role,
+                subject=subject,
+                message_body=text_body,
+            ))
+
+    db.add(AuditLog(
+        profile_id=profile.id,
+        member_id=member.id,
+        actor_name=member.name,
+        action="MEDICATION_EMERGENCY_TRIGGERED",
+        details={
+            "sos_id": sos.id,
+            "incident_type": payload.incident_type,
+            "medication": payload.medication_name,
+            "symptoms": payload.symptoms,
+            "contacts_alerted": len(alerted),
+        },
+    ))
+    db.commit()
+    db.refresh(sos)
+
+    return {
+        "status": "sos_active",
+        "incident_type": payload.incident_type,
+        "message": f"🚨 Medication Emergency SOS broadcast sent to {len(alerted)} emergency contacts!",
+        "sos_id": sos.id,
+        "elder_name": profile.elder_name,
+        "triggered_by": member.name,
+        "timestamp": now_local_str,
+        "contacts_alerted": alerted,
+    }
 
 
 @router.get("/sos/active", response_model=Optional[SOSStatusOut])
