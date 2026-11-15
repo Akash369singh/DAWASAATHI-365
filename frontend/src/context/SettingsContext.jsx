@@ -40,6 +40,9 @@ export function SettingsProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem("carecircle_lang", language)
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = language || "en"
+    }
   }, [language])
 
   useEffect(() => {

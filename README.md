@@ -3,8 +3,9 @@
 > **Catalyst Solo AI Hackathon 2026**  
 > *"Not another reminder app — a closed-loop, dignified care system where elders stay independent and families are alerted only when it truly matters."*
 
-[![Backend Tests](https://img.shields.io/badge/Pytest-24%20Passed%20(100%25)-success?style=for-the-badge&logo=pytest)](backend/tests/)
-[![Frontend Tests](https://img.shields.io/badge/Vitest-14%20Passed%20(100%25)-success?style=for-the-badge&logo=vitest)](frontend/src/test/)
+[![Backend Tests](https://img.shields.io/badge/Pytest-32%20Passed%20(100%25)-success?style=for-the-badge&logo=pytest)](tests/)
+[![Frontend Tests](https://img.shields.io/badge/Vitest-24%20Passed%20(100%25)-success?style=for-the-badge&logo=vitest)](frontend/src/test/)
+[![Total Tests](https://img.shields.io/badge/Total%20Tests-56%20Passed%20(100%25)-brightgreen?style=for-the-badge&logo=githubactions)](.github/workflows/ci.yml)
 [![Vite Build](https://img.shields.io/badge/Vite-Optimized%20Chunks-blue?style=for-the-badge&logo=vite)](frontend/)
 [![Accessibility](https://img.shields.io/badge/WCAG-AAA%20Compliant-brightgreen?style=for-the-badge)](frontend/src/components/layout/AppShell.jsx)
 [![Security](https://img.shields.io/badge/Security-A%2B%20Headers%20%7C%20HMAC-orange?style=for-the-badge)](backend/app/main.py)
@@ -51,10 +52,11 @@
 - **Semantic HTML Landmarks**: Proper ARIA roles (`role="banner"`, `role="main"`, `role="alert"`, `aria-live="assertive"` for emergency banners).
 - **Elder-Optimized UI**: Giant 64px touch targets designed specifically for tremors or arthritic fingers. High-contrast color palette exceeding 4.5:1 contrast ratio.
 
-### 6. Comprehensive Automated Testing & CI/CD (38 Passing Tests)
-- **Backend Test Suite (24 Pytest Tests)**: Complete integration coverage testing authentication, medications CRUD, dose scheduling, 30m snooze ladders, emergency SOS dispatch, public emergency cards, daily check-ins, and AI fallbacks.
-- **Frontend Test Suite (14 Vitest Tests)**: Component testing for `HeroNextDose`, `DailyCheckinCard`, `SosActiveBanner`, `AppShellAccessibility`, and `i18n` translation engines.
+### 6. Comprehensive Automated Testing & CI/CD (56 Passing Tests)
+- **Backend Test Suite (32 Pytest Tests)**: Complete integration coverage testing authentication, rate-limiting lockout, role permission isolation, medications CRUD, dose scheduling, 30m snooze ladders, emergency SOS dispatch, public emergency cards, daily check-ins, and AI fallbacks.
+- **Frontend Test Suite (24 Vitest Tests across 7 Suites)**: Component testing for `HeroNextDose`, `DailyCheckinCard`, `SosActiveBanner`, `AppShellAccessibility`, `LoginForm`, `CommonComponents`, and `i18n` translation engines.
 - **Automated GitHub Actions CI**: `.github/workflows/ci.yml` runs full backend Pytest and frontend Vitest + Vite production builds on every push and PR.
+- **Root-Level One-Command Execution**: Root `package.json` and `pytest.ini` allow running `npm test` and `pytest` directly from the repository root.
 
 ---
 
@@ -83,29 +85,37 @@ The production database is seeded with a multi-generational family care circle:
 
 ---
 
-## 🧪 Running the Automated Test Suites
+## 🧪 Running the Automated Test Suites (56 Tests Total)
 
-### Run Backend Pytest Suite (24 Tests):
+### Run from Repository Root:
+```bash
+# Run 24 Frontend Vitest Tests
+npm test
+
+# Run 32 Backend Pytest Tests
+pytest tests/ -v
+```
+
+### Run Backend Pytest Suite Specifically (32 Tests):
 ```bash
 cd backend
 source venv/bin/activate
-PYTHONPATH=. pytest tests/ -v
+pytest tests/ -v
 ```
-*Result: `24 passed in 15.59s` (100% passing, 0 warnings)*
+*Result: `32 passed in 29.23s` (100% passing, 0 warnings)*
 
-### Run Frontend Vitest Suite (14 Tests):
+### Run Frontend Vitest Suite Specifically (24 Tests):
 ```bash
 cd frontend
 npm run test
 ```
-*Result: `5 passed (5), 14 passed (14)` (100% passing)*
+*Result: `7 test files passed (7), 24 tests passed (24)` (100% passing)*
 
 ### Run Production Build:
 ```bash
-cd frontend
 npm run build
 ```
-*Result: Built in 5.2s, 0 chunk warnings, fully optimized.*
+*Result: Built in 5.18s, 0 chunk warnings, fully optimized chunks.*
 
 ---
 
@@ -123,17 +133,21 @@ DAWASAATHI-365/
 │   │   ├── models/               # SQLAlchemy models (indexed for high performance)
 │   │   ├── schemas/              # Pydantic v2 schemas with ConfigDict
 │   │   └── services/             # Escalation scheduler, email dispatcher, AI engine
-│   ├── tests/                    # 24 Pytest integration tests
-│   ├── pytest.ini                # Pytest configuration
+│   ├── tests/                    # 32 Pytest integration tests
 │   └── requirements.txt          # Production & test dependencies
 ├── frontend/
 │   ├── src/
 │   │   ├── components/           # Accessible UI components (HeroNextDose, SOS, etc.)
 │   │   ├── context/              # Auth, Settings, and Audio contexts
 │   │   ├── lib/                  # Centralized API client, i18n dictionary (EN/HI/GUJ)
-│   │   └── test/                 # 14 Vitest unit & accessibility tests
+│   │   └── test/                 # 24 Vitest unit & accessibility tests
 │   ├── package.json              # Scripts including "test": "vitest run"
 │   └── vite.config.js            # Bundle splitting (manualChunks) & Vitest setup
+├── tests/                        # Root test access (32 Pytest tests)
+├── package.json                  # Root npm workspace delegation
+├── pytest.ini                    # Root pytest configuration
+├── .editorconfig                 # Clean code formatting standard
+├── SECURITY.md                   # OWASP & Defense-in-depth security policy
 └── README.md                     # Comprehensive project documentation
 ```
 

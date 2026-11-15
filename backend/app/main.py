@@ -52,6 +52,7 @@ origins = [
     "http://127.0.0.1:5173",
     "http://127.0.0.1:3000",
     "https://dawasaathi-365.vercel.app",
+    "https://dawasaathi-365-ten.vercel.app",
     "https://dawasaathi-365.onrender.com",
 ]
 origins = [o for o in origins if o]
